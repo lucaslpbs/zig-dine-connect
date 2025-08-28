@@ -263,20 +263,51 @@ const GarcomDashboard = () => {
           <TabsContent value="mesas" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Gerenciar Mesas
-                </CardTitle>
-                <CardDescription>
-                  Associe e desassocie QR codes a mesas e clientes
-                </CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Gerenciar Mesas
+                    </CardTitle>
+                    <CardDescription>
+                      Associe e desassocie QR codes a mesas e clientes
+                    </CardDescription>
+                  </div>
+                  <Button 
+                    onClick={() => navigate('/garcom/mesas')}
+                    className="bg-gradient-primary hover:shadow-glow"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Ver Todas Mesas
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Funcionalidade de gerenciamento de mesas</p>
-                  <p className="text-sm mt-2">API: POST /garcom/associar</p>
-                  <p className="text-sm">API: POST /garcom/desassociar</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card className="text-center">
+                    <CardContent className="p-4">
+                      <p className="text-2xl font-bold text-success">4</p>
+                      <p className="text-sm text-muted-foreground">Livres</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-4">
+                      <p className="text-2xl font-bold text-accent">6</p>
+                      <p className="text-sm text-muted-foreground">Ocupadas</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-4">
+                      <p className="text-2xl font-bold text-warning">2</p>
+                      <p className="text-sm text-muted-foreground">Reservadas</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-4">
+                      <p className="text-2xl font-bold text-primary">R$ 450</p>
+                      <p className="text-sm text-muted-foreground">Total</p>
+                    </CardContent>
+                  </Card>
                 </div>
               </CardContent>
             </Card>

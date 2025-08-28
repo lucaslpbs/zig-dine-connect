@@ -224,21 +224,41 @@ const AdminDashboard = () => {
                       Cadastro e gestão do cardápio
                     </CardDescription>
                   </div>
-                  <Button className="bg-gradient-primary hover:shadow-glow transition-all duration-300">
-                    Novo Produto
+                  <Button 
+                    onClick={() => navigate('/admin/produtos')}
+                    className="bg-gradient-primary hover:shadow-glow transition-all duration-300"
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    Gerenciar Produtos
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>CRUD completo de produtos do cardápio</p>
-                  <div className="text-sm mt-2 space-y-1">
-                    <p>API: GET /admin/produtos</p>
-                    <p>API: POST /admin/produtos</p>
-                    <p>API: PUT /admin/produtos/:id</p>
-                    <p>API: DELETE /admin/produtos/:id</p>
-                  </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card className="text-center">
+                    <CardContent className="p-4">
+                      <p className="text-2xl font-bold text-primary">45</p>
+                      <p className="text-sm text-muted-foreground">Total</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-4">
+                      <p className="text-2xl font-bold text-success">42</p>
+                      <p className="text-sm text-muted-foreground">Ativos</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-4">
+                      <p className="text-2xl font-bold text-muted-foreground">3</p>
+                      <p className="text-sm text-muted-foreground">Inativos</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-4">
+                      <p className="text-2xl font-bold text-accent">127</p>
+                      <p className="text-sm text-muted-foreground">Mais Vendido</p>
+                    </CardContent>
+                  </Card>
                 </div>
               </CardContent>
             </Card>
