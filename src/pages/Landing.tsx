@@ -1,34 +1,61 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RoleCard } from '@/components/ui/role-card';
-import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { 
   Users, 
   Coffee, 
   Settings, 
   ChefHat, 
-  CreditCard, 
   BarChart3,
   FileText,
-  Smartphone,
-  Clock,
-  Star
+  Clock
 } from 'lucide-react';
 import heroImage from '@/assets/hero-restaurant.jpg';
 
 const Landing = () => {
   const navigate = useNavigate();
 
-  const handleRoleSelect = (role: string) => {
-    // API: Will authenticate and redirect based on role
-    navigate(`/login?role=${role}`);
-  };
+  const roles = [
+    {
+      title: "Garçom/Atendente",
+      description: "Gerencie comandas, pedidos e tenha controle total do atendimento.",
+      icon: Coffee,
+      features: [
+        "Controle de comandas",
+        "Gerenciamento de pedidos",
+        "Histórico de clientes",
+        "Status em tempo real"
+      ],
+      roleParam: "garcom",
+      buttonText: "Acesso do Garçom"
+    },
+    {
+      title: "Administrador",
+      description: "Dashboard completo com relatórios, gestão e configurações do sistema.",
+      icon: Settings,
+      features: [
+        "Dashboard executivo",
+        "Gestão de garçons",
+        "Cadastro de produtos",
+        "Relatórios completos"
+      ],
+      roleParam: "admin",
+      buttonText: "Painel Administrativo"
+    }
+  ];
+
+  const features = [
+    { title: "Comandas Digitais", icon: FileText, description: "Sistema completo de comandas digitais" },
+    { title: "Gestão de Equipe", icon: Users, description: "Controle completo de garçons e atendentes" },
+    { title: "Relatórios", icon: BarChart3, description: "Métricas e análises em tempo real" },
+    { title: "Tempo Real", icon: Clock, description: "Atualizações instantâneas do sistema" },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
+
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -101,33 +128,17 @@ const Landing = () => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            <RoleCard
-              title="Garçom/Atendente"
-              description="Gerencie comandas, pedidos e tenha controle total do atendimento."
-              icon={<Coffee className="w-8 h-8" />}
-              features={[
-                "Controle de comandas",
-                "Gerenciamento de pedidos",
-                "Histórico de clientes",
-                "Status em tempo real"
-              ]}
-              onSelect={() => navigate('/login?role=garcom')}
-              buttonText="Acesso do Garçom"
-            />
-            
-            <RoleCard
-              title="Administrador"
-              description="Dashboard completo com relatórios, gestão e configurações do sistema."
-              icon={<Settings className="w-8 h-8" />}
-              features={[
-                "Dashboard executivo",
-                "Gestão de garçons",
-                "Cadastro de produtos",
-                "Relatórios completos"
-              ]}
-              onSelect={() => navigate('/login?role=admin')}
-              buttonText="Painel Administrativo"
-            />
+            {roles.map((role, index) => (
+              <RoleCard
+                key={index}
+                title={role.title}
+                description={role.description}
+                icon={role.icon}
+                features={role.features}
+                onSelect={() => navigate(`/login?role=${role.roleParam}`)}
+                buttonText={role.buttonText}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -142,37 +153,15 @@ const Landing = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-4 bg-gradient-primary rounded-full flex items-center justify-center">
-                <FileText className="w-6 h-6 text-primary-foreground" />
+            {features.map((feature, i) => (
+              <div key={i} className="text-center">
+                <div className="w-12 h-12 mx-auto mb-4 bg-gradient-primary rounded-full flex items-center justify-center">
+                  <feature.icon className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground text-sm">{feature.description}</p>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Comandas Digitais</h3>
-              <p className="text-muted-foreground text-sm">Sistema completo de comandas digitais</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-4 bg-gradient-accent rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6 text-accent-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Gestão de Equipe</h3>
-              <p className="text-muted-foreground text-sm">Controle completo de garçons e atendentes</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-4 bg-gradient-primary rounded-full flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Relatórios</h3>
-              <p className="text-muted-foreground text-sm">Métricas e análises em tempo real</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-12 h-12 mx-auto mb-4 bg-gradient-accent rounded-full flex items-center justify-center">
-                <Clock className="w-6 h-6 text-accent-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Tempo Real</h3>
-              <p className="text-muted-foreground text-sm">Atualizações instantâneas do sistema</p>
-            </div>
+            ))}
           </div>
         </div>
       </section>

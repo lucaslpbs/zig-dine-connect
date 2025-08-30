@@ -6,7 +6,9 @@ interface RoleCardProps {
   title: string;
   description: string;
   icon: LucideIcon;
-  onClick: () => void;
+  features?: string[];
+  onSelect: () => void;
+  buttonText: string; // <- adicionado
   className?: string;
 }
 
@@ -14,13 +16,15 @@ export const RoleCard: React.FC<RoleCardProps> = ({
   title,
   description,
   icon: Icon,
-  onClick,
+  features = [],
+  onSelect,
+  buttonText, // <- usado no botão
   className = ""
 }) => {
   return (
     <Card 
       className={`cursor-pointer group hover:shadow-large transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/20 ${className}`}
-      onClick={onClick}
+      onClick={onSelect}
     >
       <CardContent className="p-8 text-center">
         <div className="w-16 h-16 mx-auto mb-4 bg-gradient-primary rounded-full flex items-center justify-center group-hover:shadow-glow transition-all duration-300">
@@ -32,6 +36,24 @@ export const RoleCard: React.FC<RoleCardProps> = ({
         <p className="text-muted-foreground text-sm leading-relaxed">
           {description}
         </p>
+
+        {features.length > 0 && (
+          <ul className="mt-4 text-sm text-left text-muted-foreground space-y-1">
+            {features.map((feature, i) => (
+              <li key={i} className="flex items-start">
+                <span className="mr-2">•</span>
+                {feature}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <button
+          onClick={onSelect}
+          className="mt-6 w-full py-2 px-4 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 transition-colors"
+        >
+          {buttonText}
+        </button>
       </CardContent>
     </Card>
   );
