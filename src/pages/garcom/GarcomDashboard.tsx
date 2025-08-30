@@ -1,319 +1,170 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  ClipboardList, 
-  Search, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Users,
-  LogOut,
-  AlertCircle
-} from 'lucide-react';
+import { Clock, Users, DollarSign, TrendingUp, LogOut, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const GarcomDashboard = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock data for demonstration
-  const [pedidosAtivos] = useState([
-    {
-      id: 1,
-      mesa: 'MESA001',
-      cliente: 'João Silva',
-      itens: ['Hambúrguer Clássico', 'Batata Frita', 'Coca-Cola'],
-      total: 45.90,
-      status: 'em-preparo',
-      tempo: '15 min',
-      observacoes: 'Sem cebola no hambúrguer'
-    },
-    {
-      id: 2,
-      mesa: 'MESA003',
-      cliente: 'Maria Santos',
-      itens: ['Pizza Margherita', 'Suco de Laranja'],
-      total: 32.50,
-      status: 'pronto',
-      tempo: '22 min',
-      observacoes: ''
-    },
-    {
-      id: 3,
-      mesa: 'MESA007',
-      cliente: 'Carlos Lima',
-      itens: ['Salada Caesar', 'Água'],
-      total: 18.90,
-      status: 'novo',
-      tempo: '5 min',
-      observacoes: 'Mesa próxima à janela'
-    }
-  ]);
-
-  const handleStatusChange = async (pedidoId: number, newStatus: string) => {
-    // API: PATCH /garcom/pedido/:id/status
-    console.log(`Updating order ${pedidoId} to status: ${newStatus}`);
-  };
-
-  const handleLogout = () => {
-    navigate('/');
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'novo':
-        return <Badge className="bg-warning text-warning-foreground">Novo</Badge>;
-      case 'em-preparo':
-        return <Badge className="bg-accent text-accent-foreground">Em Preparo</Badge>;
-      case 'pronto':
-        return <Badge className="bg-success text-success-foreground">Pronto</Badge>;
-      case 'entregue':
-        return <Badge variant="secondary">Entregue</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'novo':
-        return <AlertCircle className="w-4 h-4" />;
-      case 'em-preparo':
-        return <Clock className="w-4 h-4" />;
-      case 'pronto':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'entregue':
-        return <CheckCircle className="w-4 h-4" />;
-      default:
-        return <XCircle className="w-4 h-4" />;
-    }
+  // Mock data - API: GET /garcom/dashboard
+  const stats = {
+    comandasAbertas: 8,
+    totalFaturamento: 1245.50,
+    clientesAtivos: 15,
+    pedidosPendentes: 5
   };
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white shadow-soft sticky top-0 z-10">
+      <header className="border-b border-border bg-card shadow-soft">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-foreground">Painel do Garçom</h1>
-              <p className="text-sm text-muted-foreground">Gerencie pedidos e atendimento</p>
+              <h1 className="text-2xl font-bold text-foreground">Sistema do Garçom</h1>
+              <p className="text-muted-foreground">Bem-vindo, João Silva</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/')}
+                className="hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="container mx-auto p-4">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-warning">3</div>
-              <div className="text-sm text-muted-foreground">Novos</div>
+      <main className="container mx-auto p-6 space-y-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="hover:shadow-medium transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Comandas Abertas</CardTitle>
+              <FileText className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">{stats.comandasAbertas}</div>
+              <p className="text-xs text-muted-foreground">Comandas ativas no sistema</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-accent">5</div>
-              <div className="text-sm text-muted-foreground">Em Preparo</div>
+
+          <Card className="hover:shadow-medium transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Faturamento</CardTitle>
+              <DollarSign className="h-4 w-4 text-success" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-success">R$ {stats.totalFaturamento.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">Faturamento das comandas abertas</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-success">2</div>
-              <div className="text-sm text-muted-foreground">Prontos</div>
+
+          <Card className="hover:shadow-medium transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
+              <Users className="h-4 w-4 text-accent" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-accent">{stats.clientesAtivos}</div>
+              <p className="text-xs text-muted-foreground">Clientes com comandas abertas</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">10</div>
-              <div className="text-sm text-muted-foreground">Mesas Ativas</div>
+
+          <Card className="hover:shadow-medium transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pedidos Pendentes</CardTitle>
+              <Clock className="h-4 w-4 text-warning" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-warning">{stats.pedidosPendentes}</div>
+              <p className="text-xs text-muted-foreground">Pedidos aguardando preparo</p>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="pedidos" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="pedidos">Pedidos Ativos</TabsTrigger>
-            <TabsTrigger value="clientes">Buscar Cliente</TabsTrigger>
-            <TabsTrigger value="mesas">Gerenciar Mesas</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="pedidos" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ClipboardList className="w-5 h-5" />
-                  Pedidos Ativos
-                </CardTitle>
-                <CardDescription>
-                  Gerencie o status dos pedidos em tempo real
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {pedidosAtivos.map((pedido) => (
-                    <Card key={pedido.id} className="border-l-4 border-l-primary">
-                      <CardContent className="p-4">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="font-semibold">{pedido.mesa}</span>
-                              <span className="text-muted-foreground">-</span>
-                              <span className="text-muted-foreground">{pedido.cliente}</span>
-                              {getStatusBadge(pedido.status)}
-                            </div>
-                            
-                            <div className="space-y-1">
-                              <p className="text-sm">
-                                <strong>Itens:</strong> {pedido.itens.join(', ')}
-                              </p>
-                              <p className="text-sm">
-                                <strong>Total:</strong> R$ {pedido.total.toFixed(2)}
-                              </p>
-                              <p className="text-sm">
-                                <strong>Tempo:</strong> {pedido.tempo}
-                              </p>
-                              {pedido.observacoes && (
-                                <p className="text-sm text-accent">
-                                  <strong>Obs:</strong> {pedido.observacoes}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex gap-2">
-                            {pedido.status === 'novo' && (
-                              <Button 
-                                size="sm" 
-                                className="bg-accent hover:bg-accent/90"
-                                onClick={() => handleStatusChange(pedido.id, 'em-preparo')}
-                              >
-                                Iniciar Preparo
-                              </Button>
-                            )}
-                            {pedido.status === 'em-preparo' && (
-                              <Button 
-                                size="sm" 
-                                className="bg-success hover:bg-success/90"
-                                onClick={() => handleStatusChange(pedido.id, 'pronto')}
-                              >
-                                Marcar Pronto
-                              </Button>
-                            )}
-                            {pedido.status === 'pronto' && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => handleStatusChange(pedido.id, 'entregue')}
-                              >
-                                Entregar
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="clientes" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Search className="w-5 h-5" />
-                  Buscar Cliente
-                </CardTitle>
-                <CardDescription>
-                  Pesquise por código, QR ou nome do cliente
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Digite código da mesa, QR ou nome..."
-                      className="pl-10"
-                    />
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Recent Activity */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Atividade Recente</CardTitle>
+              <CardDescription>
+                Últimas comandas e pedidos do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Comanda #15 - Mesa 8</p>
+                    <p className="text-sm text-muted-foreground">João Silva • R$ 45,90 • há 5 min</p>
                   </div>
-
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Digite um termo para buscar clientes</p>
-                    <p className="text-sm mt-2">Histórico de consumo será exibido aqui</p>
+                  <Badge className="bg-success text-success-foreground">Aberta</Badge>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="w-2 h-2 bg-warning rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Comanda #12 - Mesa 3</p>
+                    <p className="text-sm text-muted-foreground">Maria Santos • R$ 78,50 • há 15 min</p>
                   </div>
+                  <Badge className="bg-warning text-warning-foreground">Pendente</Badge>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="mesas" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="w-5 h-5" />
-                      Gerenciar Mesas
-                    </CardTitle>
-                    <CardDescription>
-                      Associe e desassocie QR codes a mesas e clientes
-                    </CardDescription>
+                <div className="flex items-center space-x-4">
+                  <div className="w-2 h-2 bg-accent rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Comanda #09 - Mesa 1</p>
+                    <p className="text-sm text-muted-foreground">Carlos Lima • R$ 32,00 • há 25 min</p>
                   </div>
-                  <Button 
-                    onClick={() => navigate('/garcom/mesas')}
-                    className="bg-gradient-primary hover:shadow-glow"
-                  >
-                    <Users className="w-4 h-4 mr-2" />
-                    Ver Todas Mesas
-                  </Button>
+                  <Badge className="bg-accent text-accent-foreground">Fechada</Badge>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Card className="text-center">
-                    <CardContent className="p-4">
-                      <p className="text-2xl font-bold text-success">4</p>
-                      <p className="text-sm text-muted-foreground">Livres</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="text-center">
-                    <CardContent className="p-4">
-                      <p className="text-2xl font-bold text-accent">6</p>
-                      <p className="text-sm text-muted-foreground">Ocupadas</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="text-center">
-                    <CardContent className="p-4">
-                      <p className="text-2xl font-bold text-warning">2</p>
-                      <p className="text-sm text-muted-foreground">Reservadas</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="text-center">
-                    <CardContent className="p-4">
-                      <p className="text-2xl font-bold text-primary">R$ 450</p>
-                      <p className="text-sm text-muted-foreground">Total</p>
-                    </CardContent>
-                  </Card>
+
+                <div className="flex items-center space-x-4">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Comanda #07 - Mesa 5</p>
+                    <p className="text-sm text-muted-foreground">Ana Costa • R$ 91,20 • há 35 min</p>
+                  </div>
+                  <Badge className="bg-primary text-primary-foreground">Nova</Badge>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Ações Rápidas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button 
+                onClick={() => navigate('/garcom/comandas')}
+                className="w-full justify-start bg-gradient-primary hover:shadow-glow"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Gerenciar Comandas
+              </Button>
+              <Button variant="outline" className="w-full justify-start">
+                <Clock className="w-4 h-4 mr-2" />
+                Pedidos Pendentes
+              </Button>
+              <Button variant="outline" className="w-full justify-start">
+                <DollarSign className="w-4 h-4 mr-2" />
+                Fechar Conta
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 };
