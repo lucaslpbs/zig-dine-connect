@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,52 +11,19 @@ import { Plus, Search, Edit, Trash2, User, UserCheck, UserX } from 'lucide-react
 import { useToast } from '@/hooks/use-toast';
 
 interface Garcom {
-  id: number;
+  id: string;
   nome: string;
   username: string;
   email: string;
   telefone: string;
-  status: 'ativo' | 'inativo';
-  dataCadastro: string;
+  status: boolean; // true = ativo, false = inativo
   ultimoLogin: string;
 }
 
 const GarconsPage = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [garcons, setGarcons] = useState<Garcom[]>([
-    {
-      id: 1,
-      nome: 'João Silva',
-      username: 'joao.silva',
-      email: 'joao@restaurante.com',
-      telefone: '(11) 99999-9999',
-      status: 'ativo',
-      dataCadastro: '15/01/2024',
-      ultimoLogin: '30/08/2024 14:30'
-    },
-    {
-      id: 2,
-      nome: 'Maria Santos',
-      username: 'maria.santos',
-      email: 'maria@restaurante.com',
-      telefone: '(11) 88888-8888',
-      status: 'ativo',
-      dataCadastro: '20/02/2024',
-      ultimoLogin: '29/08/2024 18:45'
-    },
-    {
-      id: 3,
-      nome: 'Pedro Costa',
-      username: 'pedro.costa',
-      email: 'pedro@restaurante.com',
-      telefone: '(11) 77777-7777',
-      status: 'inativo',
-      dataCadastro: '10/03/2024',
-      ultimoLogin: '25/08/2024 10:15'
-    }
-  ]);
-
+  const [garcons, setGarcons] = useState<Garcom[]>([]);
   const [novoGarcom, setNovoGarcom] = useState({
     nome: '',
     username: '',
@@ -64,51 +31,180 @@ const GarconsPage = () => {
     telefone: '',
     senha: ''
   });
-
   const [garcomEditando, setGarcomEditando] = useState<Garcom | null>(null);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [dialogEdicao, setDialogEdicao] = useState(false);
 
-  const handleCriarGarcom = () => {
-    // API: POST /admin/garcons
-    if (novoGarcom.nome && novoGarcom.username && novoGarcom.email && novoGarcom.senha) {
-      const garcom: Garcom = {
-        id: Date.now(),
-        nome: novoGarcom.nome,
-        username: novoGarcom.username,
-        email: novoGarcom.email,
-        telefone: novoGarcom.telefone,
-        status: 'ativo',
-        dataCadastro: new Date().toLocaleDateString('pt-BR'),
+  // Fetch garçons da API
+  useEffect(() => {
+  const fetchGarcons = async () => {
+    const token = localStorage.getItem('token'); // pega token do usuário logado
+    if (!token) {
+      toast({
+        title: 'Erro de autenticação',
+        description: 'Token não encontrado. Faça login novamente.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch('https://localhost:7097/api/admin/garcons', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!res.ok) throw new Error('Falha ao buscar garçons');
+
+      const data = await res.json();
+      const mapped = data.map((g: any) => ({
+        id: g.id,
+        nome: g.nomeCompleto,
+        username: g.usuario,
+        email: g.email,
+        telefone: g.telefone,
+        status: g.status,
+        ultimoLogin: g.ultimoAcesso ? new Date(g.ultimoAcesso).toLocaleString('pt-BR') : 'Nunca'
+      }));
+
+      setGarcons(mapped);
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Erro ao carregar garçons',
+        description: 'Não foi possível carregar os garçons da API',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  fetchGarcons();
+}, []);
+
+
+  const garconsFiltrados = garcons.filter(garcom =>
+    garcom.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    garcom.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    garcom.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const stats = {
+    total: garcons.length,
+    ativos: garcons.filter(g => g.status).length,
+    inativos: garcons.filter(g => !g.status).length
+  };
+
+  // Criar garçom
+  const handleCriarGarcom = async () => {
+  if (novoGarcom.nome && novoGarcom.username && novoGarcom.email && novoGarcom.senha) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast({
+        title: 'Erro de autenticação',
+        description: 'Token não encontrado. Faça login novamente.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    const gerarUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+    });
+    };
+
+    try {
+      const res = await fetch('https://localhost:7097/api/admin/garcons', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id: gerarUUID(), // gera um UUID para o novo garçom
+          nomeCompleto: novoGarcom.nome,
+          nomeUsuario: novoGarcom.username,
+          email: novoGarcom.email,
+          telefone: novoGarcom.telefone,
+          senhaHash: novoGarcom.senha,
+          ativo: true,
+          ultimoAcesso: new Date().toISOString()
+        })
+      });
+
+      if (!res.ok) throw new Error('Falha ao criar garçom');
+
+      const data = await res.json();
+
+      const garcomCriado: Garcom = {
+        id: data.id,
+        nome: data.nomeCompleto,
+        username: data.nomeUsuario,
+        email: data.email,
+        telefone: data.telefone,
+        status: data.status ? true : false,
         ultimoLogin: 'Nunca'
       };
 
-      setGarcons(prev => [...prev, garcom]);
+      setGarcons(prev => [...prev, garcomCriado]);
       setNovoGarcom({ nome: '', username: '', email: '', telefone: '', senha: '' });
       setDialogAberto(false);
 
       toast({
         title: "Garçom criado!",
-        description: `${garcom.nome} foi adicionado ao sistema`,
+        description: `${garcomCriado.nome} foi adicionado ao sistema`,
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Erro ao criar garçom',
+        description: 'Não foi possível criar o garçom',
+        variant: 'destructive'
       });
     }
-  };
+  }
+};
 
-  const handleEditarGarcom = () => {
-    // API: PUT /admin/garcons/:id
-    if (garcomEditando && novoGarcom.nome && novoGarcom.username && novoGarcom.email) {
-      const garcomAtualizado = {
-        ...garcomEditando,
-        nome: novoGarcom.nome,
-        username: novoGarcom.username,
+const handleEditarGarcom = async () => {
+  if (garcomEditando && novoGarcom.nome && novoGarcom.email) {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const body = {
+        nomeCompleto: novoGarcom.nome,
         email: novoGarcom.email,
-        telefone: novoGarcom.telefone
+        telefone: novoGarcom.telefone,
+        nomeUsuario: novoGarcom.username,
+        status: garcomEditando.status === true // transforma para booleano
       };
 
-      setGarcons(prev =>
-        prev.map(g => g.id === garcomEditando.id ? garcomAtualizado : g)
-      );
+      const res = await fetch(`https://localhost:7097/api/admin/garcons/${garcomEditando.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
 
+      if (!res.ok) throw new Error('Erro na atualização');
+
+      const data = await res.json();
+
+      const garcomAtualizado: Garcom = {
+        id: data.id,
+        nome: data.nomeCompleto,
+        username: garcomEditando.username, // manter username local
+        email: data.email,
+        telefone: data.telefone,
+        status: data.status ? true : false,
+        ultimoLogin: garcomEditando.ultimoLogin
+      };
+
+      setGarcons(prev => prev.map(g => g.id === garcomEditando.id ? garcomAtualizado : g));
       setGarcomEditando(null);
       setNovoGarcom({ nome: '', username: '', email: '', telefone: '', senha: '' });
       setDialogEdicao(false);
@@ -117,30 +213,69 @@ const GarconsPage = () => {
         title: "Garçom atualizado!",
         description: `Dados de ${garcomAtualizado.nome} foram atualizados`,
       });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Erro ao atualizar garçom',
+        description: 'Não foi possível atualizar o garçom',
+        variant: 'destructive'
+      });
+    }
+  }
+};
+
+
+  // Ativar/Desativar garçom
+  const handleToggleStatus = async (garcom: Garcom) => {
+    const novoStatus = !garcom.status;
+    try {
+      await fetch(`https://localhost:7097/api/admin/garcons/${garcom.id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': 'Bearer SEU_TOKEN_AQUI'
+        },
+        body: JSON.stringify({ status: novoStatus })
+      });
+      setGarcons(prev => prev.map(g => g.id === garcom.id ? { ...g, status: novoStatus } : g));
+      toast({
+        title: `Garçom ${novoStatus ? 'ativado' : 'desativado'}!`,
+        description: `${garcom.nome} foi ${novoStatus ? 'ativado' : 'desativado'} no sistema`,
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Erro ao alterar status',
+        description: 'Não foi possível alterar o status do garçom',
+        variant: 'destructive'
+      });
     }
   };
 
-  const handleToggleStatus = (garcom: Garcom) => {
-    // API: PATCH /admin/garcons/:id/status
-    const novoStatus = garcom.status === 'ativo' ? 'inativo' : 'ativo';
-    
-    setGarcons(prev =>
-      prev.map(g => 
-        g.id === garcom.id 
-          ? { ...g, status: novoStatus }
-          : g
-      )
-    );
+  // Excluir garçom
+  const handleExcluirGarcom = async (id: string) => {
+  const garcom = garcons.find(g => g.id === id);
 
-    toast({
-      title: `Garçom ${novoStatus === 'ativo' ? 'ativado' : 'desativado'}!`,
-      description: `${garcom.nome} foi ${novoStatus === 'ativo' ? 'ativado' : 'desativado'} no sistema`,
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast({
+        title: 'Erro de autenticação',
+        description: 'Token não encontrado. Faça login novamente.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const res = await fetch(`https://localhost:7097/api/admin/garcons/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      }
     });
-  };
 
-  const handleExcluirGarcom = (id: number) => {
-    // API: DELETE /admin/garcons/:id
-    const garcom = garcons.find(g => g.id === id);
+    if (!res.ok) throw new Error('Falha ao excluir garçom');
+
     setGarcons(prev => prev.filter(g => g.id !== id));
 
     toast({
@@ -148,7 +283,16 @@ const GarconsPage = () => {
       description: `${garcom?.nome} foi removido do sistema`,
       variant: "destructive"
     });
-  };
+  } catch (err) {
+    console.error(err);
+    toast({
+      title: 'Erro ao excluir garçom',
+      description: 'Não foi possível excluir o garçom',
+      variant: 'destructive'
+    });
+  }
+};
+
 
   const abrirEdicao = (garcom: Garcom) => {
     setGarcomEditando(garcom);
@@ -162,26 +306,14 @@ const GarconsPage = () => {
     setDialogEdicao(true);
   };
 
-  const garconsFiltrados = garcons.filter(garcom =>
-    garcom.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    garcom.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    garcom.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const stats = {
-    total: garcons.length,
-    ativos: garcons.filter(g => g.status === 'ativo').length,
-    inativos: garcons.filter(g => g.status === 'inativo').length
-  };
-
   return (
     <div className="space-y-6">
+      {/* Header e busca */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Gestão de Garçons</h1>
           <p className="text-muted-foreground">Gerencie usuários garçons/atendentes</p>
         </div>
-        
         <div className="flex items-center gap-4">
           <div className="relative flex-1 md:w-80">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -192,7 +324,6 @@ const GarconsPage = () => {
               className="pl-10"
             />
           </div>
-          
           <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-primary">
@@ -207,7 +338,6 @@ const GarconsPage = () => {
                   Preencha os dados para criar um novo usuário garçom/atendente
                 </DialogDescription>
               </DialogHeader>
-              
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="nome">Nome Completo</Label>
@@ -218,7 +348,6 @@ const GarconsPage = () => {
                     placeholder="Digite o nome completo"
                   />
                 </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="username">Nome de Usuário</Label>
                   <Input
@@ -228,7 +357,6 @@ const GarconsPage = () => {
                     placeholder="ex: joao.silva"
                   />
                 </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="email">E-mail</Label>
                   <Input
@@ -239,7 +367,6 @@ const GarconsPage = () => {
                     placeholder="garcom@restaurante.com"
                   />
                 </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="telefone">Telefone</Label>
                   <Input
@@ -249,7 +376,6 @@ const GarconsPage = () => {
                     placeholder="(11) 99999-9999"
                   />
                 </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="senha">Senha Inicial</Label>
                   <Input
@@ -261,7 +387,6 @@ const GarconsPage = () => {
                   />
                 </div>
               </div>
-              
               <DialogFooter>
                 <Button onClick={handleCriarGarcom} className="bg-gradient-primary">
                   Criar Garçom
@@ -283,7 +408,6 @@ const GarconsPage = () => {
             <div className="text-2xl font-bold text-primary">{stats.total}</div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ativos</CardTitle>
@@ -293,7 +417,6 @@ const GarconsPage = () => {
             <div className="text-2xl font-bold text-success">{stats.ativos}</div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Inativos</CardTitle>
@@ -305,7 +428,7 @@ const GarconsPage = () => {
         </Card>
       </div>
 
-      {/* Tabela de Garçons */}
+      {/* Tabela */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Garçons</CardTitle>
@@ -334,40 +457,22 @@ const GarconsPage = () => {
                   <TableCell>{garcom.email}</TableCell>
                   <TableCell>{garcom.telefone}</TableCell>
                   <TableCell>
-                    <Badge 
-                      variant={garcom.status === 'ativo' ? 'default' : 'secondary'}
-                      className={
-                        garcom.status === 'ativo'
-                          ? 'bg-success text-success-foreground'
-                          : 'bg-muted text-muted-foreground'
-                      }
+                    <Badge
+                      variant={garcom.status ? 'default' : 'secondary'}
+                      className={garcom.status ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'}
                     >
-                      {garcom.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                      {garcom.status ? 'Ativo' : 'Inativo'}
                     </Badge>
                   </TableCell>
                   <TableCell>{garcom.ultimoLogin}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => abrirEdicao(garcom)}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => abrirEdicao(garcom)}>
                         <Edit className="w-3 h-3" />
                       </Button>
-                      
-                      <Button
-                        size="sm"
-                        variant={garcom.status === 'ativo' ? "secondary" : "default"}
-                        onClick={() => handleToggleStatus(garcom)}
-                      >
-                        {garcom.status === 'ativo' ? (
-                          <UserX className="w-3 h-3" />
-                        ) : (
-                          <UserCheck className="w-3 h-3" />
-                        )}
+                      <Button size="sm" variant={garcom.status ? "secondary" : "default"} onClick={() => handleToggleStatus(garcom)}>
+                        {garcom.status ? <UserX className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
                       </Button>
-
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button size="sm" variant="destructive">
@@ -378,8 +483,7 @@ const GarconsPage = () => {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Tem certeza que deseja excluir o garçom {garcom.nome}? 
-                              Esta ação não pode ser desfeita.
+                              Tem certeza que deseja excluir o garçom {garcom.nome}? Esta ação não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -411,7 +515,6 @@ const GarconsPage = () => {
               Atualize os dados do garçom {garcomEditando?.nome}
             </DialogDescription>
           </DialogHeader>
-          
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="edit-nome">Nome Completo</Label>
@@ -419,20 +522,16 @@ const GarconsPage = () => {
                 id="edit-nome"
                 value={novoGarcom.nome}
                 onChange={(e) => setNovoGarcom({...novoGarcom, nome: e.target.value})}
-                placeholder="Digite o nome completo"
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="edit-username">Nome de Usuário</Label>
               <Input
                 id="edit-username"
                 value={novoGarcom.username}
                 onChange={(e) => setNovoGarcom({...novoGarcom, username: e.target.value})}
-                placeholder="ex: joao.silva"
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="edit-email">E-mail</Label>
               <Input
@@ -440,32 +539,17 @@ const GarconsPage = () => {
                 type="email"
                 value={novoGarcom.email}
                 onChange={(e) => setNovoGarcom({...novoGarcom, email: e.target.value})}
-                placeholder="garcom@restaurante.com"
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="edit-telefone">Telefone</Label>
               <Input
                 id="edit-telefone"
                 value={novoGarcom.telefone}
                 onChange={(e) => setNovoGarcom({...novoGarcom, telefone: e.target.value})}
-                placeholder="(11) 99999-9999"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="edit-senha">Nova Senha (opcional)</Label>
-              <Input
-                id="edit-senha"
-                type="password"
-                value={novoGarcom.senha}
-                onChange={(e) => setNovoGarcom({...novoGarcom, senha: e.target.value})}
-                placeholder="Deixe em branco para manter a atual"
               />
             </div>
           </div>
-          
           <DialogFooter>
             <Button onClick={handleEditarGarcom} className="bg-gradient-primary">
               Salvar Alterações

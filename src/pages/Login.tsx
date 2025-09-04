@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, User, Lock } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7097/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,24 +22,37 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // API: POST /auth/login
-    console.log('Login attempt:', { ...loginData, role });
-    
-    // Redirect based on role
-    switch (role) {
-      case 'garcom':
-        navigate('/garcom');
-        break;
-      case 'admin':
-        navigate('/admin');
-        break;
-      default:
-        navigate('/garcom');
+    try {
+      const res = await axios.post(`${API_BASE}/Auth/login`, {
+        userName: loginData.username,
+        password: loginData.password
+      });
+      
+      const token = res.data?.token; // ou o campo que sua API retorna
+      if (!token) throw new Error('Token não recebido');
+
+      // salva token no localStorage
+      localStorage.setItem('token', token);
+      // console.log('Login bem-sucedido', token);
+
+      // Redirect based on role
+      switch (role) {
+        case 'garcom':
+          navigate('/garcom');
+          break;
+        case 'admin':
+          navigate('/admin');
+          break;
+        default:
+          navigate('/garcom');
+      }
+    } catch (err: any) {
+      console.error('Erro no login:', err);
+      alert(err.response?.data?.message || err.message || 'Falha no login');
     }
   };
 
   const handleForgotPassword = () => {
-    // API: POST /auth/forgot-password
     console.log('Forgot password request for:', loginData.username);
     alert('Instruções enviadas para seu e-mail!');
   };
