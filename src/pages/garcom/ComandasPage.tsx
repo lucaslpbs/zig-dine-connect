@@ -1,27 +1,50 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Search, Users, Clock, DollarSign, X, ArrowLeft } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import axios from "axios";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Plus,
+  Search,
+  Users,
+  Clock,
+  DollarSign,
+  X,
+  ArrowLeft,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Comanda {
-  id: number;
+  id: string;
   numero: number;
-  cliente: {
-    nome: string;
-    email: string;
-    telefone: string;
-  };
   mesa: number;
-  status: 'livre' | 'ocupada' | 'fechada';
+  nomeCliente: string;
+  email: string;
+  telefone: string;
+  dataAbertura: string;
+  dataFechamento: string | null;
+  status: boolean;
   itens: Array<{
     id: number;
     nome: string;
@@ -29,127 +52,127 @@ interface Comanda {
     quantidade: number;
     total: number;
   }>;
-  total: number;
-  abertura: string;
 }
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return {
+    "Authorization": `Bearer ${token}`,
+    "Accept": "application/json",
+    "Content-Type": "application/json"
+  };
+};
+
+const API_BASE = "https://localhost:7097/api/Waiter";
+const TOKEN =  localStorage.getItem("token");
 const ComandasPage = () => {
   const router = useNavigate();
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [comandas, setComandas] = useState<Comanda[]>([
-    {
-      id: 1,
-      numero: 1,
-      cliente: { nome: 'João Silva', email: 'joao@email.com', telefone: '(11) 99999-9999' },
-      mesa: 5,
-      status: 'ocupada',
-      itens: [
-        { id: 1, nome: 'Pizza Margherita', preco: 32.0, quantidade: 1, total: 32.0 },
-        { id: 2, nome: 'Refrigerante', preco: 6.0, quantidade: 2, total: 12.0 },
-      ],
-      total: 44.0,
-      abertura: '19:30',
-    },
-    {
-      id: 2,
-      numero: 2,
-      cliente: { nome: 'Maria Santos', email: 'maria@email.com', telefone: '(11) 88888-8888' },
-      mesa: 12,
-      status: 'ocupada',
-      itens: [{ id: 3, nome: 'Hambúrguer Especial', preco: 28.0, quantidade: 1, total: 28.0 }],
-      total: 28.0,
-      abertura: '20:15',
-    },
-  ]);
-
-  // Gerar comandas livres (números 3-50)
-  React.useEffect(() => {
-    const comandasLivres = Array.from({ length: 48 }, (_, i) => ({
-      id: i + 3,
-      numero: i + 3,
-      cliente: { nome: '', email: '', telefone: '' },
-      mesa: 0,
-      status: 'livre' as const,
-      itens: [],
-      total: 0,
-      abertura: '',
-    }));
-    setComandas((prev) => [...prev, ...comandasLivres]);
-  }, []);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [comandas, setComandas] = useState<Comanda[]>([]);
   const [novaComanda, setNovaComanda] = useState({
-    nome: '',
-    email: '',
-    telefone: '',
-    mesa: '',
+    nome: "",
+    email: "",
+    telefone: "",
+    mesa: "",
   });
-
-  const [comandaSelecionada, setComandaSelecionada] = useState<Comanda | null>(null);
+  const [comandaSelecionada, setComandaSelecionada] = useState<Comanda | null>(
+    null
+  );
   const [dialogAberto, setDialogAberto] = useState(false);
   const [dialogGerenciar, setDialogGerenciar] = useState(false);
 
-  const handleAbrirComanda = (comanda: Comanda) => {
-    if (novaComanda.nome && novaComanda.email && novaComanda.telefone && novaComanda.mesa) {
-      const comandaAtualizada = {
-        ...comanda,
-        cliente: {
-          nome: novaComanda.nome,
-          email: novaComanda.email,
-          telefone: novaComanda.telefone,
-        },
-        mesa: parseInt(novaComanda.mesa),
-        status: 'ocupada' as const,
-        abertura: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      };
+  // Buscar comandas reais
+  useEffect(() => {
+    const fetchComandas = async () => {
+      try {
+        const response = await axios.get(`${API_BASE}/comandas`, {
+          headers: {
+            Authorization: `Bearer ${TOKEN}`,
+          },
+        });
+        setComandas(response.data);
+      } catch (err) {
+        console.error("Erro ao buscar comandas:", err);
+      }
+    };
+    fetchComandas();
+  }, []);
 
-      setComandas((prev) => prev.map((c) => (c.id === comanda.id ? comandaAtualizada : c)));
+  // Criar (abrir) comanda
+  const handleAbrirComanda = async (comanda: Comanda) => {
+    if (
+      novaComanda.nome &&
+      novaComanda.email &&
+      novaComanda.telefone &&
+      novaComanda.mesa
+    ) {
+      try {
+        const response = await axios.post(
+          `${API_BASE}/abrir-comanda`,
+          {
+            numeroMesa: parseInt(novaComanda.mesa),
+            nomeCliente: novaComanda.nome,
+            email: novaComanda.email,
+            telefone: novaComanda.telefone,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${TOKEN}`,
+            },
+          }
+        );
 
-      setNovaComanda({ nome: '', email: '', telefone: '', mesa: '' });
-      setDialogAberto(false);
+        setComandas((prev) => [...prev, response.data]);
 
-      toast({
-        title: 'Comanda aberta!',
-        description: `Comanda ${comanda.numero} aberta para ${novaComanda.nome}`,
-      });
+        setNovaComanda({ nome: "", email: "", telefone: "", mesa: "" });
+        setDialogAberto(false);
+
+        toast({
+          title: "Comanda aberta!",
+          description: `Mesa ${novaComanda.mesa} aberta para ${novaComanda.nome}`,
+        });
+      } catch (err) {
+        console.error("Erro ao abrir comanda:", err);
+        toast({
+          title: "Erro",
+          description: "Não foi possível abrir a comanda.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
+  // Fechar comanda (aqui você ainda não tem endpoint, então só limpa local)
   const handleFecharComanda = (comanda: Comanda) => {
-    const comandaFechada = {
-      ...comanda,
-      status: 'livre' as const,
-      cliente: { nome: '', email: '', telefone: '' },
-      mesa: 0,
-      itens: [],
-      total: 0,
-      abertura: '',
-    };
-
-    setComandas((prev) => prev.map((c) => (c.id === comanda.id ? comandaFechada : c)));
-
+    setComandas((prev) => prev.filter((c) => c.id !== comanda.id));
     setDialogGerenciar(false);
     setComandaSelecionada(null);
 
     toast({
-      title: 'Comanda fechada!',
-      description: `Comanda ${comanda.numero} foi fechada e está disponível`,
+      title: "Comanda fechada!",
+      description: `Mesa ${comanda.mesa} foi liberada`,
     });
   };
 
+  // Filtro
   const comandasFiltradas = comandas.filter(
     (comanda) =>
       comanda.numero.toString().includes(searchTerm) ||
-      comanda.cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      comanda.nomeCliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
       comanda.mesa.toString().includes(searchTerm)
   );
 
+  // Stats
   const stats = {
-    livres: comandas.filter((c) => c.status === 'livre').length,
-    ocupadas: comandas.filter((c) => c.status === 'ocupada').length,
-    faturamento: comandas
-      .filter((c) => c.status === 'ocupada')
-      .reduce((acc, c) => acc + c.total, 0),
+    livres: 50 - comandas.length, // ajuste temporário
+    ocupadas: comandas.length,
+    faturamento: comandas.reduce(
+      (acc, c) =>
+        acc +
+        c.itens.reduce((soma, item) => soma + item.total, 0),
+      0
+    ),
   };
 
   return (
@@ -228,7 +251,7 @@ const ComandasPage = () => {
             <Card
               key={comanda.id}
               className={`cursor-pointer transition-all hover:shadow-medium ${
-                comanda.status === 'livre'
+                comanda.status === true
                   ? 'border-success hover:border-success/50'
                   : 'border-warning hover:border-warning/50'
               }`}
@@ -237,27 +260,28 @@ const ComandasPage = () => {
                 <div className="text-center space-y-2">
                   <div className="text-lg font-bold">#{comanda.numero}</div>
                   <Badge
-                    variant={comanda.status === 'livre' ? 'default' : 'secondary'}
+                    variant={comanda.status === true ? 'default' : 'secondary'}
                     className={
-                      comanda.status === 'livre'
+                      comanda.status === true
                         ? 'bg-success text-success-foreground'
                         : 'bg-warning text-warning-foreground'
                     }
                   >
-                    {comanda.status === 'livre' ? 'Livre' : 'Ocupada'}
+                    {comanda.status === true ? true : false}
                   </Badge>
 
-                  {comanda.status === 'ocupada' && (
+                  {comanda.status === false && (
                     <div className="space-y-1 text-xs text-muted-foreground">
                       <div>Mesa {comanda.mesa}</div>
-                      <div>{comanda.cliente.nome}</div>
+                      <div>{comanda.nomeCliente}</div>
                       <div className="font-semibold text-accent">
-                        R$ {comanda.total.toFixed(2)}
+                        R$ {comanda.numero.toFixed(2)} 
+                        {/* trocar para total */}
                       </div>
                     </div>
                   )}
 
-                  {comanda.status === 'livre' ? (
+                  {comanda.status === true ? (
                     <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
                       <DialogTrigger asChild>
                         <Button size="sm" className="w-full">
@@ -362,8 +386,8 @@ const ComandasPage = () => {
                 Comanda #{comandaSelecionada?.numero} - Mesa {comandaSelecionada?.mesa}
               </DialogTitle>
               <DialogDescription>
-                Cliente: {comandaSelecionada?.cliente.nome} | Aberta às{' '}
-                {comandaSelecionada?.abertura}
+                Cliente: {comandaSelecionada?.nomeCliente} | Aberta às{' '}
+                {comandaSelecionada?.dataAbertura}
               </DialogDescription>
             </DialogHeader>
 
@@ -373,13 +397,13 @@ const ComandasPage = () => {
                   <div>
                     <Label className="text-sm font-medium">E-mail</Label>
                     <p className="text-sm text-muted-foreground">
-                      {comandaSelecionada.cliente.email}
+                      {comandaSelecionada.email}
                     </p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Telefone</Label>
                     <p className="text-sm text-muted-foreground">
-                      {comandaSelecionada.cliente.telefone}
+                      {comandaSelecionada.telefone}
                     </p>
                   </div>
                 </div>
@@ -415,7 +439,8 @@ const ComandasPage = () => {
                 <div className="flex justify-between items-center text-lg font-bold border-t pt-4">
                   <span>Total da Comanda:</span>
                   <span className="text-accent">
-                    R$ {comandaSelecionada.total.toFixed(2)}
+                    R$ {comandaSelecionada.numero.toFixed(2)}
+                    {/* Trocar para total */}
                   </span>
                 </div>
               </div>
