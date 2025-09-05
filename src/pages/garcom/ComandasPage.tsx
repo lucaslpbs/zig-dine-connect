@@ -111,7 +111,8 @@ const ComandasPage = () => {
         const response = await axios.post(
           `${API_BASE}/abrir-comanda`,
           {
-            numeroMesa: parseInt(novaComanda.mesa),
+            numero: comanda.numero,
+            mesa: parseInt(novaComanda.mesa),
             nomeCliente: novaComanda.nome,
             email: novaComanda.email,
             telefone: novaComanda.telefone,
