@@ -111,8 +111,7 @@ const ComandasPage = () => {
         const response = await axios.post(
           `${API_BASE}/abrir-comanda`,
           {
-            numero: comanda.numero,
-            mesa: parseInt(novaComanda.mesa),
+            numeroMesa: parseInt(novaComanda.mesa),
             nomeCliente: novaComanda.nome,
             email: novaComanda.email,
             telefone: novaComanda.telefone,
@@ -175,6 +174,9 @@ const ComandasPage = () => {
       0
     ),
   };
+  // Exemplo: ordenando por número da comanda
+const comandasOrdenadas = [...comandasFiltradas].sort((a, b) => a.numero - b.numero);
+
 
   return (
     <div className="flex justify-center">
@@ -248,7 +250,7 @@ const ComandasPage = () => {
 
         {/* Grid de Comandas */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 justify-center">
-          {comandasFiltradas.map((comanda) => (
+          {comandasOrdenadas.map((comanda) => (
             <Card
               key={comanda.id}
               className={`cursor-pointer transition-all hover:shadow-medium ${
